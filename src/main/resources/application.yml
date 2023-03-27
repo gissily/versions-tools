@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: versions-tools
+  main:
+    banner-mode: off
+    
+    
+logging:
+  level:
+    ROOT: ERROR
+    
+info:
+  app:
+    name: ${spring.application.name}
+    version: '@project.version@'

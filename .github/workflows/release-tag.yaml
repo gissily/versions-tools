@@ -1,0 +1,27 @@
+name: Release Tag
+
+on: [workflow_dispatch]
+
+jobs:
+  release-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT }}
+      - name: Setup graalvm
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.3.1'
+          java-version: '17'
+          components: 'native-image'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Perpare
+        run: |
+          sudo apt update && sudo apt install -y bc
+      - uses: fregante/setup-git-user@v2
+      - name: Tag
+        run: |
+           ./ci/script/commit-next-version.sh

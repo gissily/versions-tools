@@ -1,0 +1,21 @@
+namespace: opcal-infrastructure
+dev:
+  dev-versions-tools:
+    image: ghcr.io/opcal/graalvm:java17-22
+    command: bash
+    autocreate: true
+    environment:
+      TZ: $TIMEZONE
+      PROJECT_DIR: /app
+    externalVolumes:
+      - infra-maven-cache:/root/.m2
+    workdir: /app
+    sync:
+      - ../:/app
+    forward:
+      - 8080:8080
+      - 5000:5000
+    persistentVolume: 
+      enabled: false
+    nodeSelector:
+      category: builder

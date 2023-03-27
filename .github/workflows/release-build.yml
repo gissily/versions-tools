@@ -1,0 +1,31 @@
+name: Package Build and Release
+
+on:
+  push:
+    tags:
+      - "*.release"
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup graalvm
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.3.1'
+          java-version: '17'
+          components: 'native-image'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Package
+        run: |
+           ./mvnw clean -Pnative native:compile
+      - name: Release and Upload
+        uses: softprops/action-gh-release@v1
+        with:
+          files: './target/versions'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
