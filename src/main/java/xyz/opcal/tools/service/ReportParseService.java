@@ -32,10 +32,8 @@ public class ReportParseService {
 			if (CollectionUtils.isEmpty(row.getElementsByTag("td"))) {
 				continue;
 			}
-
 			parsePropertyInfo(row.getElementsByTag("td")).ifPresent(i -> infos.put(i.getPropertyName(), i));
 		}
-
 		return infos;
 	}
 

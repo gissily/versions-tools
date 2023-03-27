@@ -6,10 +6,12 @@ import java.io.FileOutputStream;
 import java.util.Objects;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ResourceUtils;
 
 import lombok.SneakyThrows;
@@ -20,12 +22,16 @@ import xyz.opcal.tools.model.reporting.ReportPropertyInfo;
 public class VersionCheckerService {
 
 	static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
+	static final String UPDATE_FLAG_FILE = "versionUpdate";
 
 	private @Autowired VersionConfigService versionConfigService;
 	private @Autowired ReportParseService reportParseService;
 
 	@SneakyThrows
 	public void check(File config) {
+		if (getUpdateFlagFile().exists()) {
+			FileUtils.delete(getUpdateFlagFile());
+		}
 		var versionConfig = versionConfigService.load(config);
 
 		var dependenciesFile = ResourceUtils.getFile(versionConfig.getDependencies());
@@ -33,11 +39,19 @@ public class VersionCheckerService {
 
 		var reports = reportParseService.parse(ResourceUtils.getFile(versionConfig.getUpdateReport()));
 
-		versionConfig.getVersionRegisters().stream().filter(pvinfo -> Objects.nonNull(reports.get(pvinfo.getPropertyName())))
+		var list = versionConfig.getVersionRegisters().stream().filter(pvinfo -> Objects.nonNull(reports.get(pvinfo.getPropertyName())))
 				.map(pvinfo -> checkVersion(pvinfo, reports.get(pvinfo.getPropertyName()))).filter(triple -> StringUtils.isNoneBlank(triple.getRight()))
-				.forEach(triple -> updateDependenciesProperties(dependencies, triple));
+				.toList();
+		list.forEach(triple -> updateDependenciesProperties(dependencies, triple));
+		if (!CollectionUtils.isEmpty(list)) {
+			updateDependencies(dependencies, dependenciesFile);
+			FileUtils.touch(getUpdateFlagFile());
+			System.out.println("update flag file: " + getUpdateFlagFile());
+		}
+	}
 
-		updateDependencies(dependencies, dependenciesFile);
+	File getUpdateFlagFile() {
+		return FileUtils.getFile(FileUtils.getTempDirectory(), UPDATE_FLAG_FILE);
 	}
 
 	void updateDependenciesProperties(Properties dependencies, Triple<String, String, String> triple) {
