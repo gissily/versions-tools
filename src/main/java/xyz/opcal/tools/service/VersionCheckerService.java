@@ -3,6 +3,7 @@ package xyz.opcal.tools.service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -42,10 +43,15 @@ public class VersionCheckerService {
 		var list = versionConfig.getVersionRegisters().stream().filter(pvinfo -> Objects.nonNull(reports.get(pvinfo.getPropertyName())))
 				.map(pvinfo -> checkVersion(pvinfo, reports.get(pvinfo.getPropertyName()))).filter(triple -> StringUtils.isNoneBlank(triple.getRight()))
 				.toList();
-		list.forEach(triple -> updateDependenciesProperties(dependencies, triple));
+
+		StringBuilder updateMessage = new StringBuilder();
+		updateMessage.append("updating new versions: \n ");
+
+		list.forEach(triple -> updateMessage.append(updateDependenciesProperties(dependencies, triple)));
 		if (!CollectionUtils.isEmpty(list)) {
 			updateDependencies(dependencies, dependenciesFile);
-			FileUtils.touch(getUpdateFlagFile());
+			FileUtils.write(getUpdateFlagFile(), updateMessage, StandardCharsets.UTF_8);
+			System.out.println(updateMessage.toString());
 			System.out.println("update flag file: " + getUpdateFlagFile());
 		}
 	}
@@ -54,9 +60,9 @@ public class VersionCheckerService {
 		return FileUtils.getFile(FileUtils.getTempDirectory(), UPDATE_FLAG_FILE);
 	}
 
-	void updateDependenciesProperties(Properties dependencies, Triple<String, String, String> triple) {
-		System.out.println(String.format("update new version key: [%s]\t\t[ %s -> %s ]", triple.getLeft(), triple.getMiddle(), triple.getRight()));
+	String updateDependenciesProperties(Properties dependencies, Triple<String, String, String> triple) {
 		dependencies.setProperty(triple.getLeft(), triple.getRight());
+		return String.format("[%s]\t\t[%s -> %s]%n ", triple.getLeft(), triple.getMiddle(), triple.getRight());
 	}
 
 	private Triple<String, String, String> checkVersion(PropertyVersionInfo propertyVersionInfo, ReportPropertyInfo reportPropertyInfo) {
