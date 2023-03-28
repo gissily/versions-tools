@@ -13,12 +13,15 @@ import lombok.ToString;
 @Getter
 @ToString
 @JsonNaming(PropertyNamingStrategies.KebabCaseStrategy.class)
-public class PropertyVersionInfo implements Serializable {
+public class VersionRegisterInfo implements Serializable {
 
 	private static final long serialVersionUID = -6804825073204253140L;
 
 	private String propertyName;
 	private Boolean enable = true;
 	private UpdatePolicy updatePolicy;
+	
+	private String groupId;
+	private String artifactId;
 
 }

@@ -24,12 +24,17 @@ public class VersionConfig implements Serializable {
 	private String dependencies;
 
 	/**
-	 * property-updates-report.xml file path
+	 * property-updates-report.html file path
 	 */
 	private String updateReport;
 
 	/**
+	 * parent-updates-report.html file path
+	 */
+	private String parentReport;
+
+	/**
 	 * register version property need to check and update
 	 */
-	private List<PropertyVersionInfo> versionRegisters;
+	private List<VersionRegisterInfo> versionRegisters;
 }

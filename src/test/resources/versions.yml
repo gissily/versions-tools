@@ -1,20 +1,23 @@
 dependencies: ./target/test-classes/dependencies.properties
 update-report: ./target/test-classes/property-updates-report.html
+parent-report: ./target/test-classes/parent-updates-report.html
 version-registers:
   - property-name: spring-boot.version
     enable: true
     update-policy: SNAPSHOT
   - property-name: spring-cloud.version
-    enable: true
     update-policy: INCREMENTAL
   - property-name: spring-boot-admin.version
-    enable: true
     update-policy: INCREMENTAL
   - property-name: testcontainers.version
-    enable: true
     update-policy: LATEST
   - property-name: playtika-feign-reactive.version
-    enable: true
     update-policy: LATEST
+  - property-name: commons-io.version
+    update-policy: LATEST
+  - property-name: opcal-commons-build.version
+    update-policy: INCREMENTAL
+    group-id: xyz.opcal.build
+    artifact-id: opcal-commons-build
     
     

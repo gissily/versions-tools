@@ -7,9 +7,11 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ReportPropertyInfo {
+public class ParentReportInfo {
 
 	private String propertyName;
+	private String groupId;
+	private String artifactId;
 	private String currentVersion;
 	private String latestSubincremental;
 	private String latestIncremental;

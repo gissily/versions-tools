@@ -15,15 +15,24 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootTest(properties = { "logging.level.ROOT=info" })
-class ReportParseServiceTest {
+class ReportParserServiceTest {
 
 	@Autowired
-	ReportParseService reportParseService;
+	ReportParserService reportParseService;
 
 	@Test
-	void test() throws FileNotFoundException {
+	void parsePropertyReport() throws FileNotFoundException {
 		var reportFile = ResourceUtils.getFile("./target/test-classes/property-updates-report.html");
-		var reports = reportParseService.parse(reportFile);
+		var reports = reportParseService.parsePropertyReport(reportFile);
+		assertNotNull(reports);
+		assertFalse(CollectionUtils.isEmpty(reports));
+		log.info("report:\n{}", reports);
+	}
+
+	@Test
+	void parseParentReport() throws FileNotFoundException {
+		var reportFile = ResourceUtils.getFile("./target/test-classes/parent-updates-report.html");
+		var reports = reportParseService.parseParentReport(reportFile);
 		assertNotNull(reports);
 		assertFalse(CollectionUtils.isEmpty(reports));
 		log.info("report:\n{}", reports);
