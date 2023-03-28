@@ -56,10 +56,19 @@ public class VersionCheckerService {
 
 		List<Triple<String, String, String>> list = new ArrayList<>();
 
-		list.addAll(parsePropertyUpdateReport(ResourceUtils.getFile(versionConfig.getUpdateReport()), versionConfig.getVersionRegisters()));
+		var updateReportPath = versionConfig.getUpdateReport();
+		if (StringUtils.isNotBlank(updateReportPath) && ResourceUtils.getFile(versionConfig.getUpdateReport()).exists()) {
+			list.addAll(parsePropertyUpdateReport(ResourceUtils.getFile(versionConfig.getUpdateReport()), versionConfig.getVersionRegisters()));
+		}
 
-		var parentVersion = parseParentUpdateReport(ResourceUtils.getFile(versionConfig.getParentReport()), versionConfig.getVersionRegisters());
-		list.addAll(parentVersion);
+		boolean updateParent = false;
+
+		var parentReportPath = versionConfig.getParentReport();
+		if (StringUtils.isNotBlank(parentReportPath) && ResourceUtils.getFile(versionConfig.getParentReport()).exists()) {
+			var parentVersions = parseParentUpdateReport(ResourceUtils.getFile(versionConfig.getParentReport()), versionConfig.getVersionRegisters());
+			list.addAll(parentVersions);
+			updateParent = !parentVersions.isEmpty();
+		}
 
 		StringBuilder updateMessage = new StringBuilder();
 		updateMessage.append("updating new versions: \n ");
@@ -70,7 +79,7 @@ public class VersionCheckerService {
 			FileUtils.write(getUpdateFlagFile(), updateMessage, StandardCharsets.UTF_8);
 			System.out.println(updateMessage.toString());
 			System.out.println("update flag file: " + getUpdateFlagFile());
-			if (!parentVersion.isEmpty()) {
+			if (updateParent) {
 				FileUtils.touch(getParentFlagFile());
 				System.out.println("parent update flag file: " + getParentFlagFile());
 			}
