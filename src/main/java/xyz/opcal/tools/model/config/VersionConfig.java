@@ -26,12 +26,12 @@ public class VersionConfig implements Serializable {
 	/**
 	 * property-updates-report.html file path
 	 */
-	private String updateReport;
+	private List<String> updateReports;
 
 	/**
 	 * parent-updates-report.html file path
 	 */
-	private String parentReport;
+	private List<String> parentReports;
 
 	/**
 	 * register version property need to check and update

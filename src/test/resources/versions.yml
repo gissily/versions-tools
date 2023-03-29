@@ -1,6 +1,8 @@
 dependencies: ./target/test-classes/dependencies.properties
-update-report: ./target/test-classes/property-updates-report.html
-parent-report: ./target/test-classes/parent-updates-report.html
+update-reports: 
+  - ./target/test-classes/property-updates-report.html
+parent-reports: 
+  - ./target/test-classes/parent-updates-report.html
 version-registers:
   - property-name: spring-boot.version
     enable: true

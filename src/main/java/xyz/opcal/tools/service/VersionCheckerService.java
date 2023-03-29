@@ -2,6 +2,7 @@ package xyz.opcal.tools.service;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.BiFunction;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,10 +23,12 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ResourceUtils;
 
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import xyz.opcal.tools.model.config.VersionRegisterInfo;
 import xyz.opcal.tools.model.reporting.ParentReportInfo;
 import xyz.opcal.tools.model.reporting.PropertyReportInfo;
 
+@Slf4j
 @Service
 public class VersionCheckerService {
 
@@ -56,19 +60,11 @@ public class VersionCheckerService {
 
 		List<Triple<String, String, String>> list = new ArrayList<>();
 
-		var updateReportPath = versionConfig.getUpdateReport();
-		if (StringUtils.isNotBlank(updateReportPath) && ResourceUtils.getFile(versionConfig.getUpdateReport()).exists()) {
-			list.addAll(parsePropertyUpdateReport(ResourceUtils.getFile(versionConfig.getUpdateReport()), versionConfig.getVersionRegisters()));
-		}
+		list.addAll(parseReport(versionConfig.getUpdateReports(), versionConfig.getVersionRegisters(), propertyReportParser()));
 
-		boolean updateParent = false;
+		var parentVersions = parseReport(versionConfig.getUpdateReports(), versionConfig.getVersionRegisters(), parentReportParser());
 
-		var parentReportPath = versionConfig.getParentReport();
-		if (StringUtils.isNotBlank(parentReportPath) && ResourceUtils.getFile(versionConfig.getParentReport()).exists()) {
-			var parentVersions = parseParentUpdateReport(ResourceUtils.getFile(versionConfig.getParentReport()), versionConfig.getVersionRegisters());
-			list.addAll(parentVersions);
-			updateParent = !parentVersions.isEmpty();
-		}
+		list.addAll(parentVersions);
 
 		StringBuilder updateMessage = new StringBuilder();
 		updateMessage.append("updating new versions: \n ");
@@ -79,27 +75,51 @@ public class VersionCheckerService {
 			FileUtils.write(getUpdateFlagFile(), updateMessage, StandardCharsets.UTF_8);
 			System.out.println(updateMessage.toString());
 			System.out.println("update flag file: " + getUpdateFlagFile());
-			if (updateParent) {
+			if (!parentVersions.isEmpty()) {
 				FileUtils.touch(getParentFlagFile());
 				System.out.println("parent update flag file: " + getParentFlagFile());
 			}
 		}
 	}
 
-	List<Triple<String, String, String>> parsePropertyUpdateReport(File reportFile, List<VersionRegisterInfo> versionRegisters) {
-		var reports = reportParseService.parsePropertyReport(reportFile);
-		return versionRegisters.stream().filter(VersionRegisterInfo::getEnable)
-				.filter(registerInfo -> Objects.nonNull(reports.get(registerInfo.getPropertyName())))
-				.map(registerInfo -> checkVersion(registerInfo, reports.get(registerInfo.getPropertyName())))
-				.filter(triple -> StringUtils.isNotBlank(triple.getRight())).toList();
+	File mapFile(String filePath) {
+		try {
+			return ResourceUtils.getFile(filePath);
+		} catch (FileNotFoundException e) {
+			log.error("loading file {} error: {}", filePath, e.getMessage());
+		}
+		return null;
 	}
 
-	List<Triple<String, String, String>> parseParentUpdateReport(File reportFile, List<VersionRegisterInfo> versionRegisters) {
-		var reports = reportParseService.parseParentReport(reportFile);
-		return versionRegisters.stream().filter(VersionRegisterInfo::getEnable)
-				.filter(registerInfo -> StringUtils.isNoneBlank(registerInfo.getGroupId(), registerInfo.getArtifactId()))
-				.map(registerInfo -> getParenetReport(registerInfo, reports)).filter(Optional::isPresent).map(op -> parentToProperty(op.get()))
-				.map(pair -> checkVersion(pair.getLeft(), pair.getRight())).filter(triple -> StringUtils.isNotBlank(triple.getRight())).toList();
+	List<Triple<String, String, String>> parseReport(List<String> files, List<VersionRegisterInfo> versionRegisters,
+			BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> parser) {
+		return files.stream().map(this::mapFile).filter(file -> Objects.nonNull(file) && file.exists())
+				.flatMap(file -> parseReport(file, versionRegisters, parser).stream()).distinct().toList();
+	}
+
+	List<Triple<String, String, String>> parseReport(File reportFile, List<VersionRegisterInfo> versionRegisters,
+			BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> parser) {
+		return parser.apply(reportFile, versionRegisters);
+	}
+
+	BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> propertyReportParser() {
+		return (reportFile, versionRegisters) -> {
+			var reports = reportParseService.parsePropertyReport(reportFile);
+			return versionRegisters.stream().filter(VersionRegisterInfo::getEnable)
+					.filter(registerInfo -> Objects.nonNull(reports.get(registerInfo.getPropertyName())))
+					.map(registerInfo -> checkVersion(registerInfo, reports.get(registerInfo.getPropertyName())))
+					.filter(triple -> StringUtils.isNotBlank(triple.getRight())).toList();
+		};
+	}
+
+	BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> parentReportParser() {
+		return (reportFile, versionRegisters) -> {
+			var reports = reportParseService.parseParentReport(reportFile);
+			return versionRegisters.stream().filter(VersionRegisterInfo::getEnable)
+					.filter(registerInfo -> StringUtils.isNoneBlank(registerInfo.getGroupId(), registerInfo.getArtifactId()))
+					.map(registerInfo -> getParenetReport(registerInfo, reports)).filter(Optional::isPresent).map(op -> parentToProperty(op.get()))
+					.map(pair -> checkVersion(pair.getLeft(), pair.getRight())).filter(triple -> StringUtils.isNotBlank(triple.getRight())).toList();
+		};
 	}
 
 	Pair<VersionRegisterInfo, PropertyReportInfo> parentToProperty(Pair<VersionRegisterInfo, ParentReportInfo> parentReports) {
