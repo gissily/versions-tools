@@ -1,7 +1,9 @@
 package xyz.opcal.tools;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,9 +17,14 @@ import xyz.opcal.tools.service.VersionCheckerService;
 @SpringBootApplication
 public class VersionsApplication implements CommandLineRunner {
 
+	static final String[] VERSION_COMMANDS = new String[] { "version", "-v", "-V", "--version" };
+
 	public static void main(String[] args) {
 		SpringApplication.run(VersionsApplication.class, args);
 	}
+
+	@Value("${info.app.version}")
+	private String version;
 
 	private @Autowired VersionCheckerService versionCheckerService;
 
@@ -26,12 +33,28 @@ public class VersionsApplication implements CommandLineRunner {
 		if (ArrayUtils.isEmpty(args)) {
 			return;
 		}
+		if (checkVersion(args[0])) {
+			version();
+			return;
+		}
 		var configFile = ResourceUtils.getFile(args[0]);
 		if (!configFile.exists()) {
 			System.out.println(String.format("%s does not exist", args[0]));
 			return;
 		}
 		versionCheckerService.check(configFile);
+	}
+
+	void version() {
+		String displayVersion = version;
+		if (StringUtils.contains(version, "-SNAPSHOT")) {
+			displayVersion = StringUtils.substringBeforeLast(version, "-SNAPSHOT");
+		}
+		System.out.println(displayVersion);
+	}
+
+	boolean checkVersion(String command) {
+		return ArrayUtils.contains(VERSION_COMMANDS, command);
 	}
 
 }
