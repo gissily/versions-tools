@@ -21,7 +21,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Package
         run: |
-           ./mvnw clean -Pnative native:compile
+          SNAPSHOT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version | grep "^[^\\[]" |grep -v Download)
+          RELEASE_VERSION=${SNAPSHOT_VERSION/-SNAPSHOT/}
+          ./mvnw versions:set -DnewVersion=${RELEASE_VERSION}
+          ./mvnw clean -Pnative native:compile
       - name: Release and Upload
         uses: softprops/action-gh-release@v1
         with:

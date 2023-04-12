@@ -1,7 +1,6 @@
 package xyz.opcal.tools;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -46,11 +45,7 @@ public class VersionsApplication implements CommandLineRunner {
 	}
 
 	void version() {
-		String displayVersion = version;
-		if (StringUtils.contains(version, "-SNAPSHOT")) {
-			displayVersion = StringUtils.substringBeforeLast(version, "-SNAPSHOT");
-		}
-		System.out.println(displayVersion);
+		System.out.println(version);
 	}
 
 	boolean checkVersion(String command) {
