@@ -62,7 +62,7 @@ public class VersionCheckerService {
 
 		list.addAll(parseReport(versionConfig.getUpdateReports(), versionConfig.getVersionRegisters(), propertyReportParser()));
 
-		var parentVersions = parseReport(versionConfig.getUpdateReports(), versionConfig.getVersionRegisters(), parentReportParser());
+		var parentVersions = parseReport(versionConfig.getParentReports(), versionConfig.getVersionRegisters(), parentReportParser());
 
 		list.addAll(parentVersions);
 
