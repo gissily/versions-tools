@@ -93,6 +93,9 @@ public class VersionCheckerService {
 
 	List<Triple<String, String, String>> parseReport(List<String> files, List<VersionRegisterInfo> versionRegisters,
 			BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> parser) {
+		if (CollectionUtils.isEmpty(files)) {
+			return new ArrayList<>();
+		}
 		return files.stream().map(this::mapFile).filter(file -> Objects.nonNull(file) && file.exists())
 				.flatMap(file -> parseReport(file, versionRegisters, parser).stream()).distinct().toList();
 	}
