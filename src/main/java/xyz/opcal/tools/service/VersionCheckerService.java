@@ -164,11 +164,18 @@ public class VersionCheckerService {
 		return switch (registerInfo.getUpdatePolicy()) {
 		case MAJOR -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestMajor());
 		case MINOR -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestMinor());
-		case INCREMENTAL -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestIncremental());
+		case INCREMENTAL -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), getIncrementalVersion(reportPropertyInfo));
 		case LATEST -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), latestVersion(reportPropertyInfo));
 		case SNAPSHOT -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestSubincremental());
 		default -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), StringUtils.EMPTY);
 		};
+	}
+
+	String getIncrementalVersion(PropertyReportInfo reportPropertyInfo) {
+		if (StringUtils.isBlank(reportPropertyInfo.getLatestIncremental()) && StringUtils.contains(reportPropertyInfo.getCurrentVersion(), SNAPSHOT_SUFFIX)) {
+			return reportPropertyInfo.getLatestSubincremental();
+		}
+		return reportPropertyInfo.getLatestIncremental();
 	}
 
 	private String latestVersion(PropertyReportInfo reportPropertyInfo) {
