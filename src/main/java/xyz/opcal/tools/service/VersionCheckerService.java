@@ -172,7 +172,7 @@ public class VersionCheckerService {
 	}
 
 	String getIncrementalVersion(PropertyReportInfo reportPropertyInfo) {
-		if (StringUtils.isBlank(reportPropertyInfo.getLatestIncremental()) && StringUtils.contains(reportPropertyInfo.getCurrentVersion(), SNAPSHOT_SUFFIX)) {
+		if (StringUtils.isBlank(reportPropertyInfo.getLatestIncremental())) {
 			return reportPropertyInfo.getLatestSubincremental();
 		}
 		return reportPropertyInfo.getLatestIncremental();
