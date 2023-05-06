@@ -32,7 +32,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-           $snapshotVersion = & .\mvnw help:evaluate "-Dexpression=project.version" | Select-String -Pattern "^[^\[]*" | Select-String -Pattern Download -NotMatch | ForEach-Object { $_.Matches.Value }
+           $snapshotVersion = & .\mvnw help:evaluate "-Dexpression=project.version" | Select-String -Pattern "^[^\[]*" | Select-String -Pattern Download -NotMatch | Select-String -Pattern Progress -NotMatch | ForEach-Object { $_.Matches.Value }
            $version = ""
            foreach ($line in $snapshotVersion.split("`n")) {
               $version = $version + $line
