@@ -43,7 +43,7 @@ jobs:
       - name: Prepare
         if: ${{ matrix.os != 'windows-latest' }}
         run: | 
-          SNAPSHOT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version | grep "^[^\\[]" |grep -v Download)
+          SNAPSHOT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version | grep "^[^\\[]" |grep -v Download |grep -v Progress)
           RELEASE_VERSION=${SNAPSHOT_VERSION/-SNAPSHOT/}
           
           ./mvnw versions:set -DnewVersion=${RELEASE_VERSION}
