@@ -5,6 +5,8 @@ on:
       - main
     tags-ignore:
       - '*'
+    paths-ignore:
+      - .github/workflows/windows-build.yml 
       
 jobs:
   push-and-build:
