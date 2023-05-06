@@ -19,15 +19,19 @@ jobs:
       - name: Testing
         shell: pwsh
         run: |
-           $snapshotVersion = & .\mvnw help:evaluate "-Dexpression=project.version" | Select-String -Pattern "^[^\[]*" | Select-String -Pattern Download -NotMatch | ForEach-Object { $_.Matches.Value }
+           Get-ComputerInfo | select WindowsProductName, WindowsVersion, OsHardwareAbstractionLayer
+           $snapshotVersion = & .\mvnw help:evaluate "-Dexpression=project.version" | Select-String -Pattern "^[^\[]*" | Select-String -Pattern Download -NotMatch | Select-String -Pattern Progress -NotMatch | ForEach-Object { $_.Matches.Value }
+           echo "snapshotVersion is $snapshotVersion"
            $version = ""
-           echo $snapshotVersion
            foreach ($line in $snapshotVersion.split("`n")) {
               $version = $version + $line
            }
+           echo "version is $version"
            $releaseVersion = $version.Trim().TrimEnd("-SNAPSHOT")
-           echo $releaseVersion
-           
+           echo "releaseVersion is $releaseVersion"
+           echo "     "
+           echo "     "
+           echo "     "
            .\mvnw.cmd versions:set "-DnewVersion=$releaseVersion"
            .\mvnw.cmd clean test 
            
