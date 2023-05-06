@@ -114,7 +114,7 @@
         <groupId>org.graalvm.buildtools</groupId>
         <artifactId>native-maven-plugin</artifactId>
         <configuration>
-          <imageName>versions</imageName>
+          <imageName>versions-${BIN_SUFFIX}</imageName>
         </configuration>
       </plugin>
       <plugin>

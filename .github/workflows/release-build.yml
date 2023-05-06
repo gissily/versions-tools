@@ -7,28 +7,68 @@ on:
 
 jobs:
   build-release:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            suffix: linux
+          - os: macos-latest
+            suffix: macos
+          - os: windows-latest
+            suffix: win
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup graalvm
         uses: graalvm/setup-graalvm@v1
         with:
-          version: '22.3.1'
+          version: 'latest'
           java-version: '17'
           components: 'native-image'
           cache: 'maven'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Package
+      - name: Prepare win
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
         run: |
+           $snapshotVersion = & .\mvnw help:evaluate "-Dexpression=project.version" | Select-String -Pattern "^[^\[]*" | Select-String -Pattern Download -NotMatch | ForEach-Object { $_.Matches.Value }
+           $version = ""
+           foreach ($line in $snapshotVersion.split("`n")) {
+              $version = $version + $line
+           }
+           $releaseVersion = $version.Trim().TrimEnd("-SNAPSHOT")
+           .\mvnw.cmd versions:set "-DnewVersion=$releaseVersion"
+           
+      - name: Prepare
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: | 
           SNAPSHOT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version | grep "^[^\\[]" |grep -v Download)
           RELEASE_VERSION=${SNAPSHOT_VERSION/-SNAPSHOT/}
+          
           ./mvnw versions:set -DnewVersion=${RELEASE_VERSION}
+      - name: Package
+        env:
+          BIN_SUFFIX: ${{ matrix.suffix }}
+        run: |
           ./mvnw clean -Pnative native:compile
+      - name: clean win
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: cmd
+        run: |
+          del /f .\target\versions.jar
+          del /f .\target\versions.jar.original
+          del /f .\target\versions***build_artifacts.txt
+      - name: clean
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: | 
+          rm -f ./target/versions.jar 
+          rm -f ./target/versions.jar.original
+          rm -f ./target/versions***build_artifacts.txt
       - name: Release and Upload
         uses: softprops/action-gh-release@v1
         with:
-          files: './target/versions'
+          files: './target/versions**'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

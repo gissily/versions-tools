@@ -10,7 +10,7 @@ jobs:
       - name: Setup graalvm
         uses: graalvm/setup-graalvm@v1
         with:
-          version: '22.3.1'
+          version: 'latest'
           java-version: '17'
           components: 'native-image'
           cache: 'maven'
