@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.function.BiFunction;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import xyz.opcal.tools.model.config.VersionRegisterInfo;
 import xyz.opcal.tools.model.reporting.ParentReportInfo;
 import xyz.opcal.tools.model.reporting.PropertyReportInfo;
+import xyz.opcal.tools.service.report.IReportParser;
 
 @Slf4j
 @Service
@@ -39,31 +39,18 @@ public class VersionCheckerService {
 	private @Autowired VersionConfigService versionConfigService;
 	private @Autowired ReportParserService reportParseService;
 
-	private void deleteFlagFiles() throws IOException {
-		if (getUpdateFlagFile().exists()) {
-			FileUtils.delete(getUpdateFlagFile());
-		}
-		if (getParentFlagFile().exists()) {
-			FileUtils.delete(getParentFlagFile());
-		}
-
-	}
-
 	@SneakyThrows
 	public void check(File config) {
 		deleteFlagFiles();
 
 		var versionConfig = versionConfigService.load(config);
-
 		var dependenciesFile = ResourceUtils.getFile(versionConfig.getDependencies());
 		var dependencies = loadProperties(dependenciesFile);
 
 		List<Triple<String, String, String>> list = new ArrayList<>();
-
 		list.addAll(parseReport(versionConfig.getUpdateReports(), versionConfig.getVersionRegisters(), propertyReportParser()));
 
 		var parentVersions = parseReport(versionConfig.getParentReports(), versionConfig.getVersionRegisters(), parentReportParser());
-
 		list.addAll(parentVersions);
 
 		StringBuilder updateMessage = new StringBuilder();
@@ -82,6 +69,58 @@ public class VersionCheckerService {
 		}
 	}
 
+	private void deleteFlagFiles() throws IOException {
+		if (getUpdateFlagFile().exists()) {
+			FileUtils.delete(getUpdateFlagFile());
+		}
+		if (getParentFlagFile().exists()) {
+			FileUtils.delete(getParentFlagFile());
+		}
+	}
+
+	@SneakyThrows
+	private void updateDependencies(Properties dependencies, File file) {
+		try (var outputStream = new FileOutputStream(file)) {
+			dependencies.store(outputStream, null);
+		}
+	}
+
+	@SneakyThrows
+	private Properties loadProperties(File file) {
+		Properties properties = new Properties();
+		try (var inputStream = new FileInputStream(file)) {
+			properties.load(inputStream);
+		}
+		return properties;
+	}
+
+	File getUpdateFlagFile() {
+		return FileUtils.getFile(FileUtils.getTempDirectory(), UPDATE_FLAG_FILE);
+	}
+
+	File getParentFlagFile() {
+		return FileUtils.getFile(FileUtils.getTempDirectory(), PARENT_FLAG_FILE);
+	}
+
+	String updateDependenciesProperties(Properties dependencies, Triple<String, String, String> triple) {
+		dependencies.setProperty(triple.getLeft(), triple.getRight());
+		return String.format("[%s]\t\t[%s -> %s]%n ", triple.getLeft(), triple.getMiddle(), triple.getRight());
+	}
+
+	List<Triple<String, String, String>> parseReport(List<String> files, List<VersionRegisterInfo> versionRegisters, IReportParser parser) {
+		if (CollectionUtils.isEmpty(files)) {
+			return new ArrayList<>();
+		}
+		// @formatter:off
+		return files.stream()
+				.map(this::mapFile)
+				.filter(file -> Objects.nonNull(file) && file.exists())
+				.flatMap(file -> parseReport(file, versionRegisters, parser).stream())
+				.distinct()
+				.toList();
+		// @formatter:on
+	}
+	
 	File mapFile(String filePath) {
 		try {
 			return ResourceUtils.getFile(filePath);
@@ -91,37 +130,36 @@ public class VersionCheckerService {
 		return null;
 	}
 
-	List<Triple<String, String, String>> parseReport(List<String> files, List<VersionRegisterInfo> versionRegisters,
-			BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> parser) {
-		if (CollectionUtils.isEmpty(files)) {
-			return new ArrayList<>();
-		}
-		return files.stream().map(this::mapFile).filter(file -> Objects.nonNull(file) && file.exists())
-				.flatMap(file -> parseReport(file, versionRegisters, parser).stream()).distinct().toList();
+	List<Triple<String, String, String>> parseReport(File reportFile, List<VersionRegisterInfo> versionRegisters, IReportParser parser) {
+		return parser.parse(reportFile, versionRegisters);
 	}
 
-	List<Triple<String, String, String>> parseReport(File reportFile, List<VersionRegisterInfo> versionRegisters,
-			BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> parser) {
-		return parser.apply(reportFile, versionRegisters);
-	}
-
-	BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> propertyReportParser() {
+	IReportParser propertyReportParser() {
 		return (reportFile, versionRegisters) -> {
 			var reports = reportParseService.parsePropertyReport(reportFile);
+			// @formatter:off
 			return versionRegisters.stream().filter(VersionRegisterInfo::getEnable)
 					.filter(registerInfo -> Objects.nonNull(reports.get(registerInfo.getPropertyName())))
 					.map(registerInfo -> checkVersion(registerInfo, reports.get(registerInfo.getPropertyName())))
-					.filter(triple -> StringUtils.isNotBlank(triple.getRight())).toList();
+					.filter(triple -> StringUtils.isNotBlank(triple.getRight()))
+					.toList();
+			// @formatter:on
 		};
 	}
 
-	BiFunction<File, List<VersionRegisterInfo>, List<Triple<String, String, String>>> parentReportParser() {
+	IReportParser parentReportParser() {
 		return (reportFile, versionRegisters) -> {
 			var reports = reportParseService.parseParentReport(reportFile);
+			// @formatter:off
 			return versionRegisters.stream().filter(VersionRegisterInfo::getEnable)
 					.filter(registerInfo -> StringUtils.isNoneBlank(registerInfo.getGroupId(), registerInfo.getArtifactId()))
-					.map(registerInfo -> getParenetReport(registerInfo, reports)).filter(Optional::isPresent).map(op -> parentToProperty(op.get()))
-					.map(pair -> checkVersion(pair.getLeft(), pair.getRight())).filter(triple -> StringUtils.isNotBlank(triple.getRight())).toList();
+					.map(registerInfo -> getParenetReport(registerInfo, reports))
+					.filter(Optional::isPresent)
+					.map(op -> parentToProperty(op.get()))
+					.map(pair -> checkVersion(pair.getLeft(), pair.getRight()))
+					.filter(triple -> StringUtils.isNotBlank(triple.getRight()))
+					.toList();
+			// @formatter:on
 		};
 	}
 
@@ -139,24 +177,17 @@ public class VersionCheckerService {
 	}
 
 	Optional<Pair<VersionRegisterInfo, ParentReportInfo>> getParenetReport(VersionRegisterInfo versionRegisterInfo, List<ParentReportInfo> parentReports) {
+		// @formatter:off
 		return parentReports.stream()
-				.filter(report -> StringUtils.equals(report.getGroupId(), versionRegisterInfo.getGroupId())
-						&& StringUtils.equals(report.getArtifactId(), versionRegisterInfo.getArtifactId()))
-				.map(report -> Pair.of(versionRegisterInfo, report)).findFirst();
-
+				.filter(report -> isSameArtifact(report, versionRegisterInfo))
+				.map(report -> Pair.of(versionRegisterInfo, report))
+				.findFirst();
+		// @formatter:on
 	}
 
-	File getUpdateFlagFile() {
-		return FileUtils.getFile(FileUtils.getTempDirectory(), UPDATE_FLAG_FILE);
-	}
-
-	File getParentFlagFile() {
-		return FileUtils.getFile(FileUtils.getTempDirectory(), PARENT_FLAG_FILE);
-	}
-
-	String updateDependenciesProperties(Properties dependencies, Triple<String, String, String> triple) {
-		dependencies.setProperty(triple.getLeft(), triple.getRight());
-		return String.format("[%s]\t\t[%s -> %s]%n ", triple.getLeft(), triple.getMiddle(), triple.getRight());
+	boolean isSameArtifact(ParentReportInfo report, VersionRegisterInfo versionRegisterInfo) {
+		return StringUtils.equals(report.getGroupId(), versionRegisterInfo.getGroupId())
+				&& StringUtils.equals(report.getArtifactId(), versionRegisterInfo.getArtifactId());
 	}
 
 	private Triple<String, String, String> checkVersion(VersionRegisterInfo registerInfo, PropertyReportInfo reportPropertyInfo) {
@@ -189,22 +220,6 @@ public class VersionCheckerService {
 			return reportPropertyInfo.getLatestIncremental();
 		}
 		return StringUtils.EMPTY;
-	}
-
-	@SneakyThrows
-	private void updateDependencies(Properties dependencies, File file) {
-		try (var outputStream = new FileOutputStream(file)) {
-			dependencies.store(outputStream, null);
-		}
-	}
-
-	@SneakyThrows
-	private Properties loadProperties(File file) {
-		Properties properties = new Properties();
-		try (var inputStream = new FileInputStream(file)) {
-			properties.load(inputStream);
-		}
-		return properties;
 	}
 
 }

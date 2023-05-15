@@ -27,6 +27,10 @@ public class VersionsApplication implements CommandLineRunner {
 
 	private @Autowired VersionCheckerService versionCheckerService;
 
+	/**
+	 * command line <br/>
+	 * versions /file/path/versions.yaml
+	 */
 	@Override
 	public void run(String... args) throws Exception {
 		if (ArrayUtils.isEmpty(args)) {

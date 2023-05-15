@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 import lombok.SneakyThrows;
-import xyz.opcal.tools.expression.ConfigExpressionParser;
+import xyz.opcal.tools.expression.ConfigEnviranmentParser;
 import xyz.opcal.tools.model.config.VersionConfig;
 
 @Service
@@ -21,24 +21,24 @@ public class VersionConfigService {
 
 	private final YAMLMapper yamlMapper;
 	private final ConfigurableEnvironment environment;
-	private final ConfigExpressionParser configExpressionParser;
+	private final ConfigEnviranmentParser configEnviranmentParser;
 
 	public VersionConfigService(ConfigurableEnvironment environment) {
 		this.environment = environment;
-		this.configExpressionParser = new ConfigExpressionParser(this.environment);
+		this.configEnviranmentParser = new ConfigEnviranmentParser(this.environment);
 		this.yamlMapper = new YAMLMapper();
 		this.yamlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}
 
 	@SneakyThrows
 	public VersionConfig load(File config) {
-		return yamlMapper.readValue(parserConfigTemplate(config), VersionConfig.class);
+		return yamlMapper.readValue(loadConfigWithEnv(config), VersionConfig.class);
 	}
 
 	@SneakyThrows
-	String parserConfigTemplate(File config) {
+	String loadConfigWithEnv(File config) {
 		try (InputStream input = new FileInputStream(config)) {
-			return configExpressionParser.parser(IOUtils.toString(input, StandardCharsets.UTF_8));
+			return configEnviranmentParser.parser(IOUtils.toString(input, StandardCharsets.UTF_8));
 		}
 	}
 }

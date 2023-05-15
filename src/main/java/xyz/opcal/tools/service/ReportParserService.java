@@ -26,12 +26,10 @@ public class ReportParserService {
 
 	@SneakyThrows
 	public Map<String, PropertyReportInfo> parsePropertyReport(File file) {
+		Map<String, PropertyReportInfo> infos = new HashMap<>();
 		var document = Jsoup.parse(file);
 		var versionTable = document.getElementsByTag("table").get(1);
-
 		var rows = versionTable.getElementsByTag("tr");
-
-		Map<String, PropertyReportInfo> infos = new HashMap<>();
 		for (Element row : rows) {
 			if (CollectionUtils.isEmpty(row.getElementsByTag("td"))) {
 				continue;
@@ -57,24 +55,20 @@ public class ReportParserService {
 
 	@SneakyThrows
 	public List<ParentReportInfo> parseParentReport(File file) {
+		List<ParentReportInfo> infos = new ArrayList<>();
 		var document = Jsoup.parse(file);
 		var versionTable = document.getElementsByTag("table").get(0);
-		List<ParentReportInfo> infos = new ArrayList<>();
-
 		var rows = versionTable.getElementsByTag("tr");
-
 		for (Element row : rows) {
 			if (CollectionUtils.isEmpty(row.getElementsByTag("td"))) {
 				continue;
 			}
 			parseParent(row.getElementsByTag("td")).ifPresent(infos::add);
 		}
-
 		return infos;
 	}
 
 	private Optional<ParentReportInfo> parseParent(Elements dataColumns) {
-
 		if (CollectionUtils.isEmpty(dataColumns) || dataColumns.size() < PARENT_ROW_SIZE) {
 			return Optional.empty();
 		}
