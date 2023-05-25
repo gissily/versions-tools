@@ -120,7 +120,7 @@ public class VersionCheckerService {
 				.toList();
 		// @formatter:on
 	}
-	
+
 	File mapFile(String filePath) {
 		try {
 			return ResourceUtils.getFile(filePath);
@@ -191,8 +191,7 @@ public class VersionCheckerService {
 	}
 
 	private Triple<String, String, String> checkVersion(VersionRegisterInfo registerInfo, PropertyReportInfo reportPropertyInfo) {
-
-		return switch (registerInfo.getUpdatePolicy()) {
+		var newVersion = switch (registerInfo.getUpdatePolicy()) {
 		case MAJOR -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestMajor());
 		case MINOR -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestMinor());
 		case INCREMENTAL -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), getIncrementalVersion(reportPropertyInfo));
@@ -200,6 +199,10 @@ public class VersionCheckerService {
 		case SNAPSHOT -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestSubincremental());
 		default -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), StringUtils.EMPTY);
 		};
+		if (StringUtils.equals(newVersion.getRight(), reportPropertyInfo.getCurrentVersion())) {
+			return Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), StringUtils.EMPTY);
+		}
+		return newVersion;
 	}
 
 	String getIncrementalVersion(PropertyReportInfo reportPropertyInfo) {
