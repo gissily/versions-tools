@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ResourceUtils;
 
+import com.google.common.collect.ImmutableList;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import xyz.opcal.tools.model.config.VersionRegisterInfo;
@@ -48,9 +50,11 @@ public class VersionCheckerService {
 		var dependencies = loadProperties(dependenciesFile);
 
 		List<Triple<String, String, String>> list = new ArrayList<>();
-		list.addAll(parseReport(versionConfig.getUpdateReports(), versionConfig.getVersionRegisters(), propertyReportParser()));
+		var versionRegisters = mergeVersioinInfo(versionConfig.getVersionRegisters(), dependencies);
 
-		var parentVersions = parseReport(versionConfig.getParentReports(), versionConfig.getVersionRegisters(), parentReportParser());
+		list.addAll(parseReport(versionConfig.getUpdateReports(), versionRegisters, propertyReportParser()));
+
+		var parentVersions = parseReport(versionConfig.getParentReports(), versionRegisters, parentReportParser());
 		list.addAll(parentVersions);
 
 		StringBuilder updateMessage = new StringBuilder();
@@ -76,6 +80,14 @@ public class VersionCheckerService {
 		if (getParentFlagFile().exists()) {
 			FileUtils.delete(getParentFlagFile());
 		}
+	}
+
+	List<VersionRegisterInfo> mergeVersioinInfo(List<VersionRegisterInfo> versionRegisterInfos, Properties dependencies) {
+		if (CollectionUtils.isEmpty(versionRegisterInfos)) {
+			return new ArrayList<>();
+		}
+		versionRegisterInfos.forEach(info -> info.setCurrentVersion(dependencies.getProperty(info.getPropertyName())));
+		return ImmutableList.copyOf(versionRegisterInfos);
 	}
 
 	@SneakyThrows
@@ -199,7 +211,7 @@ public class VersionCheckerService {
 		case SNAPSHOT -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestSubincremental());
 		default -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), StringUtils.EMPTY);
 		};
-		if (StringUtils.equals(newVersion.getRight(), reportPropertyInfo.getCurrentVersion())) {
+		if (StringUtils.equals(newVersion.getRight(), registerInfo.getCurrentVersion())) {
 			return Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), StringUtils.EMPTY);
 		}
 		return newVersion;

@@ -23,5 +23,7 @@ public class VersionRegisterInfo implements Serializable {
 	
 	private String groupId;
 	private String artifactId;
+	
+	private String currentVersion;
 
 }
