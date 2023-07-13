@@ -10,9 +10,8 @@ jobs:
       - name: Setup graalvm
         uses: graalvm/setup-graalvm@v1
         with:
-          version: 'latest'
           java-version: '17'
-          components: 'native-image'
+          distribution: 'graalvm'
           cache: 'maven'
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Testing

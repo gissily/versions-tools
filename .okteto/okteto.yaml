@@ -1,7 +1,7 @@
 namespace: opcal-infrastructure
 dev:
   dev-versions-tools:
-    image: ghcr.io/opcal/graalvm:java17-22
+    image: ghcr.io/opcal/graalvm:17
     command: bash
     autocreate: true
     environment:
