@@ -15,8 +15,9 @@ public class AppRuntimeHints implements RuntimeHintsRegistrar {
 	public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
 
 		// version config
-		hints.serialization().registerType(VersionConfig.class);
-		hints.serialization().registerType(VersionRegisterInfo.class);
+		hints.serialization()
+			.registerType(VersionConfig.class)
+			.registerType(VersionRegisterInfo.class);
 
 		// jackson annotation register
 		bindingReflectionHintsRegistrar.registerReflectionHints(hints.reflection(), VersionConfig.class, VersionRegisterInfo.class);
