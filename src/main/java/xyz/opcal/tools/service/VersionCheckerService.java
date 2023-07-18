@@ -1,17 +1,15 @@
 package xyz.opcal.tools.service;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -40,6 +38,7 @@ public class VersionCheckerService {
 
 	private @Autowired VersionConfigService versionConfigService;
 	private @Autowired ReportParserService reportParseService;
+	private @Autowired DependenciesPropertiesService dependenciesPropertiesService;
 
 	@SneakyThrows
 	public void check(File config) {
@@ -47,7 +46,8 @@ public class VersionCheckerService {
 
 		var versionConfig = versionConfigService.load(config);
 		var dependenciesFile = ResourceUtils.getFile(versionConfig.getDependencies());
-		var dependencies = loadProperties(dependenciesFile);
+		var builder = dependenciesPropertiesService.loadConfigurationBuilder(dependenciesFile);
+		var dependencies = builder.getConfiguration();
 
 		List<Triple<String, String, String>> list = new ArrayList<>();
 		var versionRegisters = mergeVersioinInfo(versionConfig.getVersionRegisters(), dependencies);
@@ -62,7 +62,9 @@ public class VersionCheckerService {
 
 		list.forEach(triple -> updateMessage.append(updateDependenciesProperties(dependencies, triple)));
 		if (!CollectionUtils.isEmpty(list)) {
-			updateDependencies(dependencies, dependenciesFile);
+			dependencies.getLayout().setGlobalSeparator("=");
+			dependencies.getLayout().setFooterComment(null);
+			dependenciesPropertiesService.updatePropertiesFile(builder);
 			FileUtils.write(getUpdateFlagFile(), updateMessage, StandardCharsets.UTF_8);
 			System.out.println(updateMessage.toString());
 			System.out.println("update flag file: " + getUpdateFlagFile());
@@ -82,28 +84,12 @@ public class VersionCheckerService {
 		}
 	}
 
-	List<VersionRegisterInfo> mergeVersioinInfo(List<VersionRegisterInfo> versionRegisterInfos, Properties dependencies) {
+	List<VersionRegisterInfo> mergeVersioinInfo(List<VersionRegisterInfo> versionRegisterInfos, PropertiesConfiguration dependencies) {
 		if (CollectionUtils.isEmpty(versionRegisterInfos)) {
 			return new ArrayList<>();
 		}
-		versionRegisterInfos.forEach(info -> info.setCurrentVersion(dependencies.getProperty(info.getPropertyName())));
+		versionRegisterInfos.forEach(info -> info.setCurrentVersion(dependencies.getString(info.getPropertyName())));
 		return ImmutableList.copyOf(versionRegisterInfos);
-	}
-
-	@SneakyThrows
-	private void updateDependencies(Properties dependencies, File file) {
-		try (var outputStream = new FileOutputStream(file)) {
-			dependencies.store(outputStream, null);
-		}
-	}
-
-	@SneakyThrows
-	private Properties loadProperties(File file) {
-		Properties properties = new Properties();
-		try (var inputStream = new FileInputStream(file)) {
-			properties.load(inputStream);
-		}
-		return properties;
 	}
 
 	File getUpdateFlagFile() {
@@ -114,7 +100,7 @@ public class VersionCheckerService {
 		return FileUtils.getFile(FileUtils.getTempDirectory(), PARENT_FLAG_FILE);
 	}
 
-	String updateDependenciesProperties(Properties dependencies, Triple<String, String, String> triple) {
+	String updateDependenciesProperties(PropertiesConfiguration dependencies, Triple<String, String, String> triple) {
 		dependencies.setProperty(triple.getLeft(), triple.getRight());
 		return String.format("[%s]\t\t[%s -> %s]%n ", triple.getLeft(), triple.getMiddle(), triple.getRight());
 	}
