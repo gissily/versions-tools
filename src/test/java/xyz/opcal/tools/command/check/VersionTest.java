@@ -1,4 +1,4 @@
-package xyz.opcal.tools;
+package xyz.opcal.tools.command.check;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.ResourceUtils;
 
-@SpringBootTest(args = { "version" })
+@SpringBootTest(args = { "--version" })
 class VersionTest {
 
 	@Test

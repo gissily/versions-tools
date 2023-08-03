@@ -1,4 +1,4 @@
-package xyz.opcal.tools.service;
+package xyz.opcal.tools.command.subcommands;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,73 +14,106 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ResourceUtils;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import xyz.opcal.tools.command.VersionCheckerCommand;
 import xyz.opcal.tools.model.config.VersionRegisterInfo;
+import xyz.opcal.tools.model.reporting.MergeRequestInfo;
 import xyz.opcal.tools.model.reporting.ParentReportInfo;
 import xyz.opcal.tools.model.reporting.PropertyReportInfo;
+import xyz.opcal.tools.service.DependenciesPropertiesService;
+import xyz.opcal.tools.service.ReportParserService;
+import xyz.opcal.tools.service.VersionConfigService;
 import xyz.opcal.tools.service.report.IReportParser;
 
 @Slf4j
-@Service
-public class VersionCheckerService {
+@Component
+public class VersionCheckHandler {
 
 	static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
-	static final String UPDATE_FLAG_FILE = "versionUpdate";
-	static final String PARENT_FLAG_FILE = "parentUpdate";
 
-	private @Autowired VersionConfigService versionConfigService;
-	private @Autowired ReportParserService reportParseService;
-	private @Autowired DependenciesPropertiesService dependenciesPropertiesService;
+	private VersionConfigService versionConfigService;
+	private ReportParserService reportParseService;
+	private DependenciesPropertiesService dependenciesPropertiesService;
+
+	private final ObjectMapper objectMapper;
+
+	public VersionCheckHandler(VersionConfigService versionConfigService, ReportParserService reportParseService,
+			DependenciesPropertiesService dependenciesPropertiesService) {
+		this.versionConfigService = versionConfigService;
+		this.reportParseService = reportParseService;
+		this.dependenciesPropertiesService = dependenciesPropertiesService;
+		this.objectMapper = new ObjectMapper();
+		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	}
 
 	@SneakyThrows
 	public void check(File config) {
+
 		deleteFlagFiles();
 
 		var versionConfig = versionConfigService.load(config);
 		var dependenciesFile = ResourceUtils.getFile(versionConfig.getDependencies());
-		var builder = dependenciesPropertiesService.loadConfigurationBuilder(dependenciesFile);
-		var dependencies = builder.getConfiguration();
+		var configBuilder = dependenciesPropertiesService.loadConfigurationBuilder(dependenciesFile);
+		var dependencies = configBuilder.getConfiguration();
 
 		List<Triple<String, String, String>> list = new ArrayList<>();
 		var versionRegisters = mergeVersioinInfo(versionConfig.getVersionRegisters(), dependencies);
 
-		list.addAll(parseReport(versionConfig.getUpdateReports(), versionRegisters, propertyReportParser()));
+		var dependencyVersions = parseReport(versionConfig.getUpdateReports(), versionRegisters, propertyReportParser());
+		list.addAll(dependencyVersions);
 
 		var parentVersions = parseReport(versionConfig.getParentReports(), versionRegisters, parentReportParser());
 		list.addAll(parentVersions);
-
-		StringBuilder updateMessage = new StringBuilder();
-		updateMessage.append("updating new versions: \n ");
-
-		list.forEach(triple -> updateMessage.append(updateDependenciesProperties(dependencies, triple)));
 		if (!CollectionUtils.isEmpty(list)) {
-			dependencies.getLayout().setGlobalSeparator("=");
-			dependencies.getLayout().setFooterComment(null);
-			dependenciesPropertiesService.updatePropertiesFile(builder);
-			FileUtils.write(getUpdateFlagFile(), updateMessage, StandardCharsets.UTF_8);
-			System.out.println(updateMessage.toString());
-			System.out.println("update flag file: " + getUpdateFlagFile());
+			switch (versionConfig.getMode()) {
+			case MERGE_REQUEST:
+				var mergeRequests = new ArrayList<>();
+				mergeRequests.addAll(toMergeRequestInfo(dependencyVersions, false));
+				mergeRequests.addAll(toMergeRequestInfo(parentVersions, true));
+				objectMapper.writeValue(VersionCheckerCommand.getUpdateFlagFile(), mergeRequests);
+				System.out.println("version checking result in merge request mode");
+				break;
+			case PUSH:
+			default:
+				StringBuilder updateMessage = new StringBuilder();
+				updateMessage.append("updating new versions: \n ");
+				list.forEach(triple -> updateMessage.append(updateDependenciesProperties(dependencies, triple)));
+				dependencies.getLayout().setGlobalSeparator("=");
+				dependencies.getLayout().setFooterComment(null);
+				configBuilder.save();
+				FileUtils.write(VersionCheckerCommand.getUpdateFlagFile(), updateMessage, StandardCharsets.UTF_8);
+				System.out.println(updateMessage.toString());
+				break;
+			}
+
+			System.out.println("update flag file: " + VersionCheckerCommand.getUpdateFlagFile());
 			if (!parentVersions.isEmpty()) {
-				FileUtils.touch(getParentFlagFile());
-				System.out.println("parent update flag file: " + getParentFlagFile());
+				FileUtils.touch(VersionCheckerCommand.getParentFlagFile());
+				System.out.println("parent update flag file: " + VersionCheckerCommand.getParentFlagFile());
 			}
 		}
 	}
 
+	List<MergeRequestInfo> toMergeRequestInfo(List<Triple<String, String, String>> dependencyVersions, boolean isParent) {
+		return dependencyVersions.stream().map(triple -> new MergeRequestInfo().setPropertyName(triple.getLeft()).setCurrentVersion(triple.getMiddle())
+				.setNewVersion(triple.getRight()).setParent(isParent)).toList();
+	}
+
 	private void deleteFlagFiles() throws IOException {
-		if (getUpdateFlagFile().exists()) {
-			FileUtils.delete(getUpdateFlagFile());
+		if (VersionCheckerCommand.getUpdateFlagFile().exists()) {
+			FileUtils.delete(VersionCheckerCommand.getUpdateFlagFile());
 		}
-		if (getParentFlagFile().exists()) {
-			FileUtils.delete(getParentFlagFile());
+		if (VersionCheckerCommand.getParentFlagFile().exists()) {
+			FileUtils.delete(VersionCheckerCommand.getParentFlagFile());
 		}
 	}
 
@@ -90,14 +123,6 @@ public class VersionCheckerService {
 		}
 		versionRegisterInfos.forEach(info -> info.setCurrentVersion(dependencies.getString(info.getPropertyName())));
 		return ImmutableList.copyOf(versionRegisterInfos);
-	}
-
-	File getUpdateFlagFile() {
-		return FileUtils.getFile(FileUtils.getTempDirectory(), UPDATE_FLAG_FILE);
-	}
-
-	File getParentFlagFile() {
-		return FileUtils.getFile(FileUtils.getTempDirectory(), PARENT_FLAG_FILE);
 	}
 
 	String updateDependenciesProperties(PropertiesConfiguration dependencies, Triple<String, String, String> triple) {
@@ -222,5 +247,4 @@ public class VersionCheckerService {
 		}
 		return StringUtils.EMPTY;
 	}
-
 }

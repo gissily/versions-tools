@@ -26,11 +26,6 @@ public class DependenciesPropertiesService {
 		return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(builderProperties().setFile(file));
 	}
 
-	@SneakyThrows
-	public void updatePropertiesFile(FileBasedConfigurationBuilder<PropertiesConfiguration> builder) {
-		builder.save();
-	}
-
 	/**
 	 * native support
 	 * 

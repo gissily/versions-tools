@@ -8,6 +8,7 @@ dev:
       TZ: $TIMEZONE
       PROJECT_DIR: /app
       BIN_SUFFIX: linux
+      ROOT_PATH: /app
     externalVolumes:
       - infra-maven-cache:/root/.m2
     workdir: /app

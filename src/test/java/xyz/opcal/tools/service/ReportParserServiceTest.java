@@ -14,7 +14,7 @@ import org.springframework.util.ResourceUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@SpringBootTest(properties = { "logging.level.ROOT=info" })
+@SpringBootTest(properties = { "logging.level.ROOT=info" }, args = { "--version" })
 class ReportParserServiceTest {
 
 	@Autowired

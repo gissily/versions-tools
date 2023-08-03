@@ -18,6 +18,8 @@ public class VersionConfig implements Serializable {
 
 	private static final long serialVersionUID = -870189158014674398L;
 
+	private UpdateMode mode = UpdateMode.PUSH;
+
 	/**
 	 * dependencies.properties file path
 	 */
