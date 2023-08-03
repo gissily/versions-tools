@@ -1,27 +1,30 @@
 package xyz.opcal.tools.command.check;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
+import java.io.FileNotFoundException;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.util.ResourceUtils;
 
-import xyz.opcal.tools.VersionsApplication;
+import lombok.SneakyThrows;
 
-@TestInstance(Lifecycle.PER_CLASS)
+@SpringBootTest(args = { "check", "./target/test-classes/versions.yml" })
 class CommandRunTest {
 
-	@BeforeEach
-	void restProperties() throws IOException {
+	static {
+		restProperties();
+	}
+
+	@SneakyThrows
+	static void restProperties() {
 		FileUtils.copyFileToDirectory(FileUtils.getFile("./src/test/resources/dependencies.properties"), FileUtils.getFile("./target/test-classes/"));
 	}
 
 	@Test
-	void test() {
-		assertDoesNotThrow(() -> VersionsApplication.main(new String[] { "check", "./target/test-classes/versions.yml" }));
+	void test() throws FileNotFoundException {
+		assertTrue(ResourceUtils.getFile("./target/test-classes/versions.yml").exists());
 	}
 }

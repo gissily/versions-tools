@@ -1,27 +1,27 @@
 package xyz.opcal.tools.command.mr;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-
-import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import xyz.opcal.tools.VersionsApplication;
+import lombok.SneakyThrows;
 
-@TestInstance(Lifecycle.PER_CLASS)
+@SpringBootTest(args = { "mr", "current", "spring-boot.version" })
 class MergeRequestCurrentTest {
 
-	@BeforeEach
-	void restProperties() throws IOException {
+	static {
+		restProperties();
+	}
+
+	@SneakyThrows
+	static void restProperties() {
 		FileUtils.copyFileToDirectory(FileUtils.getFile("./src/test/resources/versionUpdate"), FileUtils.getTempDirectory());
 	}
 
 	@Test
 	void test() {
-		assertDoesNotThrow(() -> VersionsApplication.main(new String[] { "mr", "current", "spring-boot.version" }));
+		assertTrue(FileUtils.getFile(FileUtils.getTempDirectory(), "versionUpdate").exists());
 	}
 }
