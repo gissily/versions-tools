@@ -2,6 +2,7 @@ package xyz.opcal.tools.command.subcommands;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -40,14 +41,26 @@ public class MergeRequestHandler {
 
 	@Command(name = "current", description = "get current version by property name")
 	public void currentVersion(@Parameters(index = "0", description = "merget request info property name") String propertyName) throws IOException {
-		Arrays.stream(loadInfos()).filter(mergeRequestInfo -> StringUtils.equals(mergeRequestInfo.getPropertyName(), propertyName)).findFirst()
-				.ifPresent(mergeRequestInfo -> System.out.println(mergeRequestInfo.getCurrentVersion()));
+		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> System.out.println(mergeRequestInfo.getCurrentVersion()));
 	}
 
 	@Command(name = "new", description = "get new version by property name")
 	public void newVersion(@Parameters(index = "0", description = "merget request info property name") String propertyName) throws IOException {
-		Arrays.stream(loadInfos()).filter(mergeRequestInfo -> StringUtils.equals(mergeRequestInfo.getPropertyName(), propertyName)).findFirst()
-				.ifPresent(mergeRequestInfo -> System.out.println(mergeRequestInfo.getNewVersion()));
+		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> System.out.println(mergeRequestInfo.getNewVersion()));
+	}
+
+	@Command(name = "parent", description = "get parent state by property name")
+	public void parentState(@Parameters(index = "0", description = "merget request info property name") String propertyName) throws IOException {
+		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> System.out.println(mergeRequestInfo.isParent()));
+	}
+
+	void mergeRequestInfoHandle(String propertyName, Consumer<MergeRequestInfo> action) throws IOException {
+		// @formatter:off
+		Arrays.stream(loadInfos()) 
+				.filter(mergeRequestInfo -> StringUtils.equals(mergeRequestInfo.getPropertyName(), propertyName)) 
+				.findFirst() 
+				.ifPresent(action);
+		// @formatter:on
 	}
 
 }
