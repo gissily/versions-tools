@@ -187,6 +187,9 @@
         <artifactId>native-maven-plugin</artifactId>
         <configuration>
           <imageName>versions-${BIN_SUFFIX}</imageName>
+          <buildArgs combine.children="append">
+            <buildArg>-march=compatibility</buildArg>
+          </buildArgs>
         </configuration>
       </plugin>
       <plugin>
