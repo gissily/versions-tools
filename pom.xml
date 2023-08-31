@@ -17,7 +17,7 @@
   <properties>
     <java.version>17</java.version>
 
-    <picocli.version>4.7.4</picocli.version>
+    <picocli.version>4.7.5</picocli.version>
     <jsoup.version>1.16.1</jsoup.version>
     <configuration2.version>2.9.0</configuration2.version>
     <commons-beanutils.version>1.9.4</commons-beanutils.version>
