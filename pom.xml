@@ -53,6 +53,11 @@
       <groupId>info.picocli</groupId>
       <artifactId>picocli-spring-boot-starter</artifactId>
     </dependency>
+    
+    <dependency>
+      <groupId>xyz.opcal.cloud</groupId>
+      <artifactId>opcal-cloud-commons-logback</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.jsoup</groupId>

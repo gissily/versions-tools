@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -20,6 +22,8 @@ import xyz.opcal.tools.model.reporting.MergeRequestInfo;
 @Component
 public class MergeRequestHandler {
 
+	private static Logger commandConsole = LoggerFactory.getLogger("COMMAND_CONSOLE");
+
 	private final ObjectMapper objectMapper;
 
 	public MergeRequestHandler() {
@@ -34,24 +38,28 @@ public class MergeRequestHandler {
 	@Command(name = "keys", description = "list all merget request info propertyName")
 	public void keys(@Option(names = "--line", defaultValue = "false") boolean line) throws IOException {
 		var lineSeparator = line ? "\n" : " ";
-		StringBuilder stringBuilder = new StringBuilder();
-		Arrays.stream(loadInfos()).map(MergeRequestInfo::getPropertyName).forEach(property -> stringBuilder.append(property).append(lineSeparator));
-		System.out.println(stringBuilder.toString());
+		// @formatter:off
+		var keys = Arrays.stream(loadInfos())
+				.map(MergeRequestInfo::getPropertyName)
+				.reduce(new StringBuilder(), (message, property) -> message.append(property).append(lineSeparator), (t, u) -> u)
+				.toString();
+		// @formatter:on
+		commandConsole.info(keys);
 	}
 
 	@Command(name = "current", description = "get current version by property name")
 	public void currentVersion(@Parameters(index = "0", description = "merget request info property name") String propertyName) throws IOException {
-		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> System.out.println(mergeRequestInfo.getCurrentVersion()));
+		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> commandConsole.info(mergeRequestInfo.getCurrentVersion()));
 	}
 
 	@Command(name = "new", description = "get new version by property name")
 	public void newVersion(@Parameters(index = "0", description = "merget request info property name") String propertyName) throws IOException {
-		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> System.out.println(mergeRequestInfo.getNewVersion()));
+		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> commandConsole.info(mergeRequestInfo.getNewVersion()));
 	}
 
 	@Command(name = "parent", description = "get parent state by property name")
 	public void parentState(@Parameters(index = "0", description = "merget request info property name") String propertyName) throws IOException {
-		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> System.out.println(mergeRequestInfo.isParent()));
+		mergeRequestInfoHandle(propertyName, mergeRequestInfo -> commandConsole.info(String.valueOf(mergeRequestInfo.isParent())));
 	}
 
 	void mergeRequestInfoHandle(String propertyName, Consumer<MergeRequestInfo> action) throws IOException {

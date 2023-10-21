@@ -14,6 +14,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ResourceUtils;
@@ -39,6 +41,8 @@ import xyz.opcal.tools.service.report.IReportParser;
 public class VersionCheckHandler {
 
 	static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
+
+	private static Logger commandConsole = LoggerFactory.getLogger("COMMAND_CONSOLE");
 
 	private VersionConfigService versionConfigService;
 	private ReportParserService reportParseService;
@@ -80,25 +84,25 @@ public class VersionCheckHandler {
 				mergeRequests.addAll(toMergeRequestInfo(dependencyVersions, false));
 				mergeRequests.addAll(toMergeRequestInfo(parentVersions, true));
 				objectMapper.writeValue(VersionCheckerCommand.getUpdateFlagFile(), mergeRequests);
-				System.out.println("version checking result in merge request mode");
+				commandConsole.info("version checking result in merge request mode");
 				break;
 			case PUSH:
 			default:
-				StringBuilder updateMessage = new StringBuilder();
-				updateMessage.append("updating new versions: \n ");
-				list.forEach(triple -> updateMessage.append(updateDependenciesProperties(dependencies, triple)));
+				var updateMessage = list.stream()
+						.reduce(new StringBuilder(), (message, triple) -> message.append(updateDependenciesProperties(dependencies, triple)), (t, u) -> u)
+						.insert(0, "updating new versions: \n ").toString();
 				dependencies.getLayout().setGlobalSeparator("=");
 				dependencies.getLayout().setFooterComment(null);
 				configBuilder.save();
 				FileUtils.write(VersionCheckerCommand.getUpdateFlagFile(), updateMessage, StandardCharsets.UTF_8);
-				System.out.println(updateMessage.toString());
+				commandConsole.info(updateMessage);
 				break;
 			}
 
-			System.out.println("update flag file: " + VersionCheckerCommand.getUpdateFlagFile());
+			commandConsole.info("update flag file: {}", VersionCheckerCommand.getUpdateFlagFile());
 			if (!parentVersions.isEmpty()) {
 				FileUtils.touch(VersionCheckerCommand.getParentFlagFile());
-				System.out.println("parent update flag file: " + VersionCheckerCommand.getParentFlagFile());
+				commandConsole.info("parent update flag file: {}", VersionCheckerCommand.getParentFlagFile());
 			}
 		}
 	}
