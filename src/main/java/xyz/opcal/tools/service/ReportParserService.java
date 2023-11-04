@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -34,9 +35,20 @@ public class ReportParserService {
 			if (CollectionUtils.isEmpty(row.getElementsByTag("td"))) {
 				continue;
 			}
-			parseProperty(row.getElementsByTag("td")).ifPresent(i -> infos.put(i.getPropertyName(), i));
+			parseProperty(row.getElementsByTag("td")).ifPresent(i -> infos.compute(i.getPropertyName(), propertyReportCompute(i)));
 		}
 		return infos;
+	}
+
+	BiFunction<String, PropertyReportInfo, PropertyReportInfo> propertyReportCompute(PropertyReportInfo propertyReportInfo) {
+
+		return (key, old) -> {
+			if (propertyReportInfo.compareTo(old) > 0) {
+				return old;
+			}
+
+			return propertyReportInfo;
+		};
 	}
 
 	private Optional<PropertyReportInfo> parseProperty(Elements dataColumns) {

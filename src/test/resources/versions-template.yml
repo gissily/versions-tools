@@ -1,6 +1,6 @@
 dependencies: #{#ROOT_PATH}/target/test-classes/dependencies.properties
 update-reports: 
-  - #{#ROOT_PATH}/target/test-classes/property-updates-report.html
+  - #{#ROOT_PATH}/target/test-classes/property-updates-aggregate-report.html
 parent-reports: 
   - #{#ROOT_PATH}/target/test-classes/parent-updates-report.html
 version-registers:

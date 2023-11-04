@@ -26,7 +26,7 @@ public class VersionConfig implements Serializable {
 	private String dependencies;
 
 	/**
-	 * property-updates-report.html file path
+	 * property-updates-report.html / property-updates-aggregate-report.html file path
 	 */
 	private List<String> updateReports;
 

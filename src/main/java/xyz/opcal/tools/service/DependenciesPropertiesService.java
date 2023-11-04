@@ -21,6 +21,11 @@ public class DependenciesPropertiesService {
 
 	static final Class<?>[] interfaces = new Class<?>[] { PropertiesBuilderParameters.class, FileBasedBuilderParameters.class };
 
+	static {
+		builderProperties();
+	}
+	
+	
 	@SneakyThrows
 	public FileBasedConfigurationBuilder<PropertiesConfiguration> loadConfigurationBuilder(File file) {
 		return new FileBasedConfigurationBuilder<>(PropertiesConfiguration.class).configure(builderProperties().setFile(file));

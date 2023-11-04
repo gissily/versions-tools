@@ -1,6 +1,6 @@
 dependencies: ./target/test-classes/dependencies.properties
 update-reports: 
-  - ./target/test-classes/property-updates-report.html
+  - ./target/test-classes/property-updates-aggregate-report.html
 parent-reports: 
   - ./target/test-classes/parent-updates-report.html
 mode: MERGE_REQUEST

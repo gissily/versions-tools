@@ -22,7 +22,7 @@ class ReportParserServiceTest {
 
 	@Test
 	void parsePropertyReport() throws FileNotFoundException {
-		var reportFile = ResourceUtils.getFile("./target/test-classes/property-updates-report.html");
+		var reportFile = ResourceUtils.getFile("./target/test-classes/property-updates-aggregate-report.html");
 		var reports = reportParseService.parsePropertyReport(reportFile);
 		assertNotNull(reports);
 		assertFalse(CollectionUtils.isEmpty(reports));

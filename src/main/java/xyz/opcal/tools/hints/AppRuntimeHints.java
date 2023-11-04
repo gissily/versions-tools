@@ -23,7 +23,7 @@ public class AppRuntimeHints implements RuntimeHintsRegistrar {
 				.registerType(org.apache.commons.configuration2.PropertiesConfiguration.class, MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
 						MemberCategory.INTROSPECT_PUBLIC_CONSTRUCTORS);
 
-		hints.proxies().registerJdkProxy(PropertiesBuilderParameters.class).registerJdkProxy(FileBasedBuilderParameters.class);
+		hints.proxies().registerJdkProxy(PropertiesBuilderParameters.class, FileBasedBuilderParameters.class);
 
 		// version config
 		hints.serialization().registerType(VersionConfig.class).registerType(VersionRegisterInfo.class).registerType(MergeRequestInfo.class);

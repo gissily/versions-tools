@@ -1,6 +1,6 @@
 dependencies: ./target/test-classes/dependencies.properties
 update-reports: 
-  - ./target/test-classes/property-updates-report.html
+  - ./target/test-classes/property-updates-aggregate-report.html
 parent-reports: 
   - ./target/test-classes/parent-updates-report.html
 version-registers:
@@ -21,5 +21,32 @@ version-registers:
     update-policy: INCREMENTAL
     group-id: xyz.opcal.build
     artifact-id: opcal-commons-build
+  # plugins
+  - property-name: maven-compiler-plugin.version
+    update-policy: LATEST
+  - property-name: maven-release-plugin.version
+    update-policy: LATEST
+  - property-name: maven-resources-plugin.version
+    update-policy: LATEST
+  - property-name: maven-gpg-plugin.version
+    update-policy: LATEST
+  - property-name: maven-javadoc-plugin.version
+    update-policy: LATEST
+  - property-name: maven-source-plugin.version
+    update-policy: LATEST
+  - property-name: maven-surefire-plugin.version
+    update-policy: LATEST
+  - property-name: maven-failsafe-plugin.version
+    update-policy: LATEST
+  - property-name: maven-jar-plugin.version
+    update-policy: LATEST
+  - property-name: versions-maven-plugin.version
+    update-policy: LATEST
+  - property-name: flatten-maven-plugin.version
+    update-policy: LATEST
+  - property-name: jacoco-maven-plugin.version
+    update-policy: LATEST
+  - property-name: ossindex-maven-plugin.version
+    update-policy: LATEST
     
     
