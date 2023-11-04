@@ -32,5 +32,5 @@ jobs:
            echo "     "
            echo "     "
            .\mvnw.cmd versions:set "-DnewVersion=$releaseVersion"
-           .\mvnw.cmd clean test 
+           .\mvnw.cmd clean -PnativeTest test 
            

@@ -1,0 +1,21 @@
+name: Macos Tests
+
+on: [workflow_dispatch]
+      
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup graalvm
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '17'
+          distribution: 'graalvm'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Testing
+        run: |
+           ./mvnw clean -PnativeTest test
+           
