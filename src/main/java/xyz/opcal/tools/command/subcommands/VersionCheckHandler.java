@@ -249,6 +249,9 @@ public class VersionCheckHandler {
 		if (StringUtils.isNotBlank(reportPropertyInfo.getLatestIncremental())) {
 			return reportPropertyInfo.getLatestIncremental();
 		}
+		if (StringUtils.isNotBlank(reportPropertyInfo.getLatestSubincremental())) {
+			return reportPropertyInfo.getLatestSubincremental();
+		}
 		return StringUtils.EMPTY;
 	}
 }
