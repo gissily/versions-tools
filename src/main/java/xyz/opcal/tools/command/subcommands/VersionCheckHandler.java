@@ -219,15 +219,22 @@ public class VersionCheckHandler {
 
 	private Triple<String, String, String> checkVersion(VersionRegisterInfo registerInfo, PropertyReportInfo reportPropertyInfo) {
 		var newVersion = switch (registerInfo.getUpdatePolicy()) {
-		case MAJOR -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestMajor());
-		case MINOR -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestMinor());
-		case INCREMENTAL -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), getIncrementalVersion(reportPropertyInfo));
-		case LATEST -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), latestVersion(reportPropertyInfo));
-		case SNAPSHOT -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), reportPropertyInfo.getLatestSubincremental());
-		default -> Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), StringUtils.EMPTY);
+		case MAJOR -> reportPropertyInfo.getLatestMajor();
+		case MINOR -> reportPropertyInfo.getLatestMinor();
+		case INCREMENTAL -> getIncrementalVersion(reportPropertyInfo);
+		case LATEST -> latestVersion(reportPropertyInfo);
+		case SNAPSHOT -> reportPropertyInfo.getLatestSubincremental();
+		default -> StringUtils.EMPTY;
 		};
-		if (StringUtils.equals(newVersion.getRight(), registerInfo.getCurrentVersion())) {
-			return Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), StringUtils.EMPTY);
+		if (StringUtils.equals(newVersion, registerInfo.getCurrentVersion())) {
+			newVersion = StringUtils.EMPTY;
+		}
+		return Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), allowSnapshotVersion(registerInfo, newVersion));
+	}
+
+	private String allowSnapshotVersion(VersionRegisterInfo registerInfo, String newVersion) {
+		if (Boolean.FALSE.equals(registerInfo.getAllowSnapshot()) && StringUtils.endsWithIgnoreCase(newVersion, SNAPSHOT_SUFFIX)) {
+			return StringUtils.EMPTY;
 		}
 		return newVersion;
 	}

@@ -25,5 +25,5 @@ public class VersionRegisterInfo implements Serializable {
 	private String artifactId;
 	
 	private String currentVersion;
-
+	private Boolean allowSnapshot = false;
 }
