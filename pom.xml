@@ -19,7 +19,7 @@
 
     <picocli.version>4.7.6</picocli.version>
     <jsoup.version>1.17.2</jsoup.version>
-    <configuration2.version>2.10.1</configuration2.version>
+    <configuration2.version>2.11.0</configuration2.version>
     <commons-beanutils.version>1.9.4</commons-beanutils.version>
   </properties>
 
