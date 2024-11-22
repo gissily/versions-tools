@@ -12,7 +12,7 @@
 
   <groupId>xyz.opcal.tools</groupId>
   <artifactId>versions-tools</artifactId>
-  <version>1.2.4-SNAPSHOT</version>
+  <version>1.2.3-SNAPSHOT</version>
 
   <properties>
     <java.version>21</java.version>
