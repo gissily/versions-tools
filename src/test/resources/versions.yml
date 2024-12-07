@@ -17,10 +17,18 @@ version-registers:
     update-policy: LATEST
   - property-name: commons-io.version
     update-policy: LATEST
+  - property-name: redisson.version
+    update-policy: LATEST
+  - property-name: eclipselink.version
+    update-policy: LATEST
   - property-name: opcal-commons-build.version
     update-policy: INCREMENTAL
     group-id: xyz.opcal.build
     artifact-id: opcal-commons-build
+  - property-name: spring-boot.version
+    update-policy: INCREMENTAL
+    group-id: org.springframework.boot
+    artifact-id: spring-boot-starter-parent
   # plugins
   - property-name: maven-compiler-plugin.version
     update-policy: LATEST
