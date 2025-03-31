@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 OSTYPE=$(uname)
 BIN_SUFFIX=""
 
