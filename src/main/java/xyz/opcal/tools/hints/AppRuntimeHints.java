@@ -20,8 +20,7 @@ public class AppRuntimeHints implements RuntimeHintsRegistrar {
 
 		hints.reflection().registerType(java.util.Calendar[].class).registerType(java.util.Date[].class).registerType(java.sql.Date[].class)
 				.registerType(java.sql.Time[].class).registerType(java.sql.Timestamp[].class).registerType(java.net.URL[].class)
-				.registerType(org.apache.commons.configuration2.PropertiesConfiguration.class, MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
-						MemberCategory.INTROSPECT_PUBLIC_CONSTRUCTORS);
+				.registerType(org.apache.commons.configuration2.PropertiesConfiguration.class, MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS);
 
 		hints.proxies().registerJdkProxy(PropertiesBuilderParameters.class, FileBasedBuilderParameters.class);
 

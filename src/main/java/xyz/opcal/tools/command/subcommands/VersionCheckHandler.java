@@ -12,6 +12,7 @@ import java.util.Optional;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
@@ -213,8 +214,8 @@ public class VersionCheckHandler {
 	}
 
 	boolean isSameArtifact(ParentReportInfo report, VersionRegisterInfo versionRegisterInfo) {
-		return StringUtils.equals(report.getGroupId(), versionRegisterInfo.getGroupId())
-				&& StringUtils.equals(report.getArtifactId(), versionRegisterInfo.getArtifactId());
+		return Strings.CS.equals(report.getGroupId(), versionRegisterInfo.getGroupId())
+				&& Strings.CS.equals(report.getArtifactId(), versionRegisterInfo.getArtifactId());
 	}
 
 	private Triple<String, String, String> checkVersion(VersionRegisterInfo registerInfo, PropertyReportInfo reportPropertyInfo) {
@@ -226,14 +227,14 @@ public class VersionCheckHandler {
 		case SNAPSHOT -> reportPropertyInfo.getLatestSubincremental();
 		default -> StringUtils.EMPTY;
 		};
-		if (StringUtils.equals(newVersion, registerInfo.getCurrentVersion())) {
+		if (Strings.CS.equals(newVersion, registerInfo.getCurrentVersion())) {
 			newVersion = StringUtils.EMPTY;
 		}
 		return Triple.of(registerInfo.getPropertyName(), reportPropertyInfo.getCurrentVersion(), allowSnapshotVersion(registerInfo, newVersion));
 	}
 
 	private String allowSnapshotVersion(VersionRegisterInfo registerInfo, String newVersion) {
-		if (Boolean.FALSE.equals(registerInfo.getAllowSnapshot()) && StringUtils.endsWithIgnoreCase(newVersion, SNAPSHOT_SUFFIX)) {
+		if (Boolean.FALSE.equals(registerInfo.getAllowSnapshot()) && Strings.CI.equals(newVersion, SNAPSHOT_SUFFIX)) {
 			return StringUtils.EMPTY;
 		}
 		return newVersion;

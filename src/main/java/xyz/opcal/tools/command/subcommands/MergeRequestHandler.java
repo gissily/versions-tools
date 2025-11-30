@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -65,7 +65,7 @@ public class MergeRequestHandler {
 	void mergeRequestInfoHandle(String propertyName, Consumer<MergeRequestInfo> action) throws IOException {
 		// @formatter:off
 		Arrays.stream(loadInfos()) 
-				.filter(mergeRequestInfo -> StringUtils.equals(mergeRequestInfo.getPropertyName(), propertyName)) 
+				.filter(mergeRequestInfo -> Strings.CS.equals(mergeRequestInfo.getPropertyName(), propertyName)) 
 				.findFirst() 
 				.ifPresent(action);
 		// @formatter:on
