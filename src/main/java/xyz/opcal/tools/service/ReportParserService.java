@@ -35,14 +35,14 @@ public class ReportParserService {
 			if (CollectionUtils.isEmpty(row.getElementsByTag("td"))) {
 				continue;
 			}
-			parseProperty(row.getElementsByTag("td")).ifPresent(i -> infos.compute(i.getPropertyName(), propertyReportCompute(i)));
+			parseProperty(row.getElementsByTag("td")).ifPresent(info -> infos.compute(info.getPropertyName(), propertyReportCompute(info)));
 		}
 		return infos;
 	}
 
 	BiFunction<String, PropertyReportInfo, PropertyReportInfo> propertyReportCompute(PropertyReportInfo propertyReportInfo) {
 
-		return (key, old) -> {
+		return (_, old) -> {
 			if (propertyReportInfo.compareTo(old) > 0) {
 				return old;
 			}

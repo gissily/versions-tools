@@ -90,7 +90,9 @@ public class VersionCheckHandler {
 			case PUSH:
 			default:
 				var updateMessage = list.stream()
-						.reduce(new StringBuilder(), (message, triple) -> message.append(updateDependenciesProperties(dependencies, triple)), (t, u) -> u)
+						.reduce(new StringBuilder(), 
+								(message, triple) -> message.append(updateDependenciesProperties(dependencies, triple)), 
+								(_, u) -> u)
 						.insert(0, "updating new versions: \n ").toString();
 				dependencies.getLayout().setGlobalSeparator("=");
 				dependencies.getLayout().setFooterComment(null);

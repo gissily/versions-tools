@@ -41,7 +41,9 @@ public class MergeRequestHandler {
 		// @formatter:off
 		var keys = Arrays.stream(loadInfos())
 				.map(MergeRequestInfo::getPropertyName)
-				.reduce(new StringBuilder(), (message, property) -> message.append(property).append(lineSeparator), (t, u) -> u)
+				.reduce(new StringBuilder(), 
+						(message, property) -> message.append(property).append(lineSeparator), 
+						(t, u) -> t.append(lineSeparator).append(u.toString()))
 				.toString();
 		// @formatter:on
 		commandConsole.info(keys);
