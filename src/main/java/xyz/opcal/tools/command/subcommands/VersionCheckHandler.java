@@ -168,7 +168,7 @@ public class VersionCheckHandler {
 		return (reportFile, versionRegisters) -> {
 			var reports = reportParseService.parsePropertyReport(reportFile);
 			// @formatter:off
-			return versionRegisters.stream().filter(VersionRegisterInfo::getEnable)
+			return versionRegisters.stream().filter(VersionRegisterInfo::getEnabled)
 					.filter(registerInfo -> Objects.nonNull(reports.get(registerInfo.getPropertyName())))
 					.map(registerInfo -> checkVersion(registerInfo, reports.get(registerInfo.getPropertyName())))
 					.filter(triple -> StringUtils.isNotBlank(triple.getRight()))
@@ -181,7 +181,7 @@ public class VersionCheckHandler {
 		return (reportFile, versionRegisters) -> {
 			var reports = reportParseService.parseParentReport(reportFile);
 			// @formatter:off
-			return versionRegisters.stream().filter(VersionRegisterInfo::getEnable)
+			return versionRegisters.stream().filter(VersionRegisterInfo::getEnabled)
 					.filter(registerInfo -> StringUtils.isNoneBlank(registerInfo.getGroupId(), registerInfo.getArtifactId()))
 					.map(registerInfo -> getParenetReport(registerInfo, reports))
 					.filter(Optional::isPresent)
