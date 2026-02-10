@@ -1,0 +1,46 @@
+name: Signature
+
+on: [ workflow_dispatch ]
+
+env:
+  BIN_SUFFIX: linux
+  ARCH: x86_64
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRI }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          trust_level: 5
+      - name: Setup graalvm
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Receive Keys
+        env:
+          GPG_PUBID: ${{ secrets.GPG_PUBID }}
+        run: |
+          gpg --keyserver keyserver.ubuntu.com --recv-keys ${GPG_PUBID}
+      - name: Testing
+        run: |
+          ./mvnw clean -PnativeTest test -Pnative native:compile
+      - name: Signature
+        working-directory: target
+        run: |
+          gpg --armor --detach-sign versions-${BIN_SUFFIX}-${ARCH}
+          gpg --armor --export 'opcal <opcal.xyz@outlook.com>' > Release.asc
+      - name: Verify
+        run: |
+          gpg --import ./target/Release.asc
+          gpg --verify ./target/versions-${BIN_SUFFIX}-${ARCH}.asc ./target/versions-${BIN_SUFFIX}-${ARCH}
+          ls -lah ./target/
+           

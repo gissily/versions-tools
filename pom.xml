@@ -191,7 +191,7 @@
         <groupId>org.graalvm.buildtools</groupId>
         <artifactId>native-maven-plugin</artifactId>
         <configuration>
-          <imageName>versions-${BIN_SUFFIX}</imageName>
+          <imageName>versions-${BIN_SUFFIX}-${ARCH}</imageName>
           <buildArgs combine.children="append">
             <buildArg>-march=compatibility</buildArg>
           </buildArgs>

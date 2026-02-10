@@ -1,4 +1,4 @@
-name: Push Package Sources and Build
+name: Push Build
 on:
   push:
     branches:
@@ -6,8 +6,10 @@ on:
     tags-ignore:
       - '*'
     paths-ignore:
-      - .github/workflows/windows-build.yml 
-      
+      - .github/workflows/windows-build.yml
+      - .github/workflows/macos-build.yml
+      - .github/workflows/signature.yml
+
 jobs:
   push-and-build:
     runs-on: ubuntu-latest
