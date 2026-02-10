@@ -8,18 +8,31 @@ on:
 jobs:
   build-release:
     strategy:
+      max-parallel: 3
       matrix:
         include:
           - os: ubuntu-latest
             suffix: linux
-          - os: macos-latest
-            suffix: macos
+            arch: x86_64
           - os: windows-latest
             suffix: win
+            arch: x86_64
+          - os: macos-latest
+            suffix: macos
+            arch: arm64
+          - os: ubuntu-24.04-arm
+            suffix: linux
+            arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRI }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          trust_level: 5
       - name: Setup graalvm
         uses: graalvm/setup-graalvm@v1
         with:
@@ -28,7 +41,7 @@ jobs:
           cache: 'maven'
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare win
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: contains(matrix.os, 'windows')
         shell: pwsh
         run: |
            $snapshotVersion = & .\mvnw help:evaluate "-Dexpression=project.version" | Select-String -Pattern "^[^\[]*" | Select-String -Pattern Download -NotMatch | Select-String -Pattern Progress -NotMatch | ForEach-Object { $_.Matches.Value }
@@ -40,7 +53,7 @@ jobs:
            .\mvnw.cmd versions:set "-DnewVersion=$releaseVersion"
            
       - name: Prepare
-        if: ${{ matrix.os != 'windows-latest' }}
+        if: ${{ !contains(matrix.os, 'windows') }}
         run: | 
           SNAPSHOT_VERSION=$(./mvnw help:evaluate -Dexpression=project.version | grep "^[^\\[]" |grep -v Download |grep -v Progress)
           RELEASE_VERSION=${SNAPSHOT_VERSION/-SNAPSHOT/}
@@ -49,25 +62,53 @@ jobs:
       - name: Package
         env:
           BIN_SUFFIX: ${{ matrix.suffix }}
+          ARCH: ${{ matrix.arch }}
         run: |
           ./mvnw clean -Pnative native:compile
       - name: clean win
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: contains(matrix.os, 'windows')
         shell: cmd
         run: |
           del /f .\target\versions.jar
           del /f .\target\versions.jar.original
           del /f .\target\versions***build_artifacts.txt
       - name: clean
-        if: ${{ matrix.os != 'windows-latest' }}
+        if: ${{ !contains(matrix.os, 'windows') }}
         run: | 
           rm -f ./target/versions.jar 
           rm -f ./target/versions.jar.original
           rm -f ./target/versions***build_artifacts.txt
+      - name: Signature Win
+        if: contains(matrix.os, 'windows')
+        env:
+          BIN_SUFFIX: ${{ matrix.suffix }}
+          ARCH: ${{ matrix.arch }}
+        working-directory: target
+        shell: pwsh
+        run: |
+          gpg --armor --detach-sign versions-${env:BIN_SUFFIX}-${env:ARCH}
+      - name: Signature
+        if: ${{ !contains(matrix.os, 'windows') }}
+        env:
+          BIN_SUFFIX: ${{ matrix.suffix }}
+          ARCH: ${{ matrix.arch }}
+        working-directory: target
+        run: |
+          gpg --armor --detach-sign versions-${BIN_SUFFIX}-${ARCH}
+      - name: Release Key
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        working-directory: target
+        env:
+          GPG_PUBID: ${{ secrets.GPG_PUBID }}
+        run: |
+          gpg --keyserver keyserver.ubuntu.com --recv-keys ${GPG_PUBID}
+          gpg --armor --export 'opcal <opcal.xyz@outlook.com>' > Release.asc
       - name: Release and Upload
         uses: softprops/action-gh-release@v2
         with:
-          files: './target/versions**'
+          files: |
+            ./target/versions**
+            ./target/Release.asc
           token: ${{ secrets.GITHUB_TOKEN }}
 
 
