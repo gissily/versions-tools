@@ -9,6 +9,11 @@ on:
       - .github/workflows/windows-build.yml
       - .github/workflows/macos-build.yml
       - .github/workflows/signature.yml
+      - .github/workflows/arm-build.yml
+
+env:
+  BIN_SUFFIX: linux
+  ARCH: x86_64
 
 jobs:
   push-and-build:

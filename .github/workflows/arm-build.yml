@@ -1,0 +1,26 @@
+name: Arm Build
+
+on: [ workflow_dispatch ]
+
+env:
+  BIN_SUFFIX: linux
+  ARCH: arm64
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup graalvm
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Testing
+        run: |
+           uname
+           uname -m
+           ./mvnw clean -PnativeTest test
