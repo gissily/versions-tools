@@ -12,6 +12,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRI }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          trust_level: 5
       - name: Setup graalvm
         uses: graalvm/setup-graalvm@v1
         with:
