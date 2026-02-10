@@ -53,8 +53,8 @@ curl -L "${DOWNLOAD_URL}" -o /tmp/versions-${BIN_SUFFIX}
 echo "downloading ${DOWNLOAD_URL_ASC}"
 curl -L "${DOWNLOAD_URL_ASC}" -o /tmp/versions-${BIN_SUFFIX}.asc
 
-gpg --import /tmp/Release.asc
-gpg --verify /tmp/versions-${BIN_SUFFIX}.asc /tmp/versions-${BIN_SUFFIX}
+gpg --quiet --batch --import /tmp/Release.asc
+gpg --quiet --verify /tmp/versions-${BIN_SUFFIX}.asc /tmp/versions-${BIN_SUFFIX}
 
 chmod +x /tmp/versions-${BIN_SUFFIX}
 
