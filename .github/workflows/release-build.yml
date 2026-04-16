@@ -104,7 +104,7 @@ jobs:
           gpg --keyserver keyserver.ubuntu.com --recv-keys ${GPG_PUBID}
           gpg --armor --export 'opcal <opcal.xyz@outlook.com>' > Release.asc
       - name: Release and Upload
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             ./target/versions**
